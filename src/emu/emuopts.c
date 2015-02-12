@@ -166,7 +166,7 @@ const options_entry emu_options::s_option_entries[] =
 	{ OPTION_DRC_LOG_NATIVE,                             "0",         OPTION_BOOLEAN,    "write DRC native disassembly log" },
 	{ OPTION_BIOS,                                       NULL,        OPTION_STRING,     "select the system BIOS to use" },
 	{ OPTION_CHEAT ";c",                                 "0",         OPTION_BOOLEAN,    "enable cheat subsystem" },
-	{ OPTION_SKIP_GAMEINFO,                              "0",         OPTION_BOOLEAN,    "skip displaying the information screen at startup" },
+	{ OPTION_SKIP_GAMEINFO ";sgi",                       "0",         OPTION_BOOLEAN,    "skip displaying the information screen at startup" },
 	{ OPTION_SKIP_LOADING,                               "0",         OPTION_BOOLEAN,    "skip displaying the loading percent at startup" },
 	{ OPTION_UI_FONT,                                    "default",   OPTION_STRING,     "specify a font to use" },
 	{ OPTION_RAMSIZE ";ram",                             NULL,        OPTION_STRING,     "size of RAM (if supported by driver)" },
