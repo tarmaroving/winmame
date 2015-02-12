@@ -71,6 +71,7 @@ public:
 	// command option overrides
 	virtual bool execute_command(const char *command) = 0;
 
+	virtual bool wait_vsync() = 0;
 };
 
 #endif  /* __OSDEPEND_H__ */

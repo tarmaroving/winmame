@@ -180,6 +180,8 @@ public:
 	virtual void video_options_add(const char *name, void *type);
 
 	osd_options &options() { return m_options; }
+	
+	virtual bool wait_vsync() { return m_options.wait_vsync(); }
 
 protected:
 	virtual bool input_init();

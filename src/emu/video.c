@@ -106,7 +106,8 @@ video_manager::video_manager(running_machine &machine)
 		m_avi_file(NULL),
 		m_avi_frame_period(attotime::zero),
 		m_avi_next_frame_time(attotime::zero),
-		m_avi_frame(0)
+		m_avi_frame(0),
+		m_throttle_threshold_check(true)
 {
 	// request a callback upon exiting
 	machine.add_notifier(MACHINE_NOTIFY_EXIT, machine_notify_delegate(FUNC(video_manager::exit), this));
@@ -218,6 +219,21 @@ void video_manager::frame_update(bool debug)
 	if (!debug && !skipped_it && effective_throttle())
 		update_throttle(current_time);
 
+	// if game refresh rate is close to display refresh rate we can simply
+	// stop throttling and let the game run at the display refresh rate so
+	// the animations will be perfectly smooth
+	if (m_throttle_threshold_check && effective_throttle() && machine().osd().wait_vsync())
+	{
+		float threshold = machine().options().throttle_threshold() / 100.0f;
+		float target_refresh = ATTOSECONDS_TO_HZ(machine().first_screen()->refresh_attoseconds());
+		float current_refresh = machine().render().max_update_rate();
+		float refresh_min = target_refresh * (1.0 - threshold);
+		float refresh_max = target_refresh * (1.0 + threshold);
+		if (current_refresh >= refresh_min && current_refresh <= refresh_max)
+			set_throttled(false);
+		m_throttle_threshold_check = false;
+	}
+	
 	// ask the OSD to update
 	g_profiler.start(PROFILER_BLIT);
 	machine().osd().update(!debug && skipped_it);
@@ -962,10 +978,7 @@ void video_manager::update_refresh_speed()
 					min_frame_period = MIN(min_frame_period, period);
 			}
 
-			// compute a target speed as an integral percentage
-			// note that we lop 0.25Hz off of the minrefresh when doing the computation to allow for
-			// the fact that most refresh rates are not accurate to 10 digits...
-			UINT32 target_speed = floor((minrefresh - 0.25f) * 1000.0 / ATTOSECONDS_TO_HZ(min_frame_period));
+			UINT32 target_speed = minrefresh * 1000.0 / ATTOSECONDS_TO_HZ(min_frame_period);
 			UINT32 original_speed = original_speed_setting();
 			target_speed = MIN(target_speed, original_speed);
 
