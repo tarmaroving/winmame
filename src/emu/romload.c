@@ -629,7 +629,10 @@ static int open_rom_file(romload_private *romdata, const char *regiontag, const 
 	tried_file_names = "";
 
 	/* update status display */
-	display_loading_rom_message(romdata, ROM_GETNAME(romp), from_list);
+	if (!romdata->machine().options().skip_loading())
+	{
+		display_loading_rom_message(romdata, ROM_GETNAME(romp), from_list);
+	}
 
 	/* extract CRC to use for searching */
 	UINT32 crc = 0;
