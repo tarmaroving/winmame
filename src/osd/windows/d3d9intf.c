@@ -62,8 +62,8 @@ INLINE void convert_present_params(const present_parameters *params, D3DPRESENT_
 
 INLINE void convert_display_mode_d3d9params(const D3DPRESENT_PARAMETERS *d3d9params, D3DDISPLAYMODEEX *displaymode)
 {
-	memset(displaymode, 0, sizeof(*displaymode));
-	displaymode->Size = sizeof(*displaymode);
+	memset(displaymode, 0, sizeof(D3DDISPLAYMODEEX));
+	displaymode->Size = sizeof(D3DDISPLAYMODEEX);
 	displaymode->Width = d3d9params->BackBufferWidth;
 	displaymode->Height = d3d9params->BackBufferHeight;
 	displaymode->RefreshRate = d3d9params->FullScreen_RefreshRateInHz;
