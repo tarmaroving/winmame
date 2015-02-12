@@ -534,15 +534,18 @@ static void verify_length_and_hash(romload_private *romdata, const char *name, U
 
 static void display_loading_rom_message(romload_private *romdata, const char *name, bool from_list)
 {
-	char buffer[200];
+	if (!romdata->machine().options().skip_gameinfo())
+	{
+		char buffer[200];
 
-	if (name != NULL)
-		sprintf(buffer, "Loading %s (%d%%)", from_list ? "Software" : emulator_info::get_capstartgamenoun(), (UINT32)(100 * (UINT64)romdata->romsloadedsize / (UINT64)romdata->romstotalsize));
-	else
-		sprintf(buffer, "Loading Complete");
+		if (name != NULL)
+			sprintf(buffer, "Loading %s (%d%%)", from_list ? "Software" : emulator_info::get_capstartgamenoun(), (UINT32)(100 * (UINT64)romdata->romsloadedsize / (UINT64)romdata->romstotalsize));
+		else
+			sprintf(buffer, "Loading Complete");
 
-	if (!romdata->machine().ui().is_menu_active())
-		romdata->machine().ui().set_startup_text(buffer, false);
+		if (!romdata->machine().ui().is_menu_active())
+			romdata->machine().ui().set_startup_text(buffer, false);
+	}
 }
 
 
@@ -628,11 +631,7 @@ static int open_rom_file(romload_private *romdata, const char *regiontag, const 
 	UINT32 romsize = rom_file_size(romp);
 	tried_file_names = "";
 
-	/* update status display */
-	if (!romdata->machine().options().skip_loading())
-	{
-		display_loading_rom_message(romdata, ROM_GETNAME(romp), from_list);
-	}
+	display_loading_rom_message(romdata, ROM_GETNAME(romp), from_list);
 
 	/* extract CRC to use for searching */
 	UINT32 crc = 0;
