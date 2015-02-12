@@ -190,6 +190,18 @@ void windows_osd_interface::update(bool skip_redraw)
 		for (win_window_info *window = win_window_list; window != NULL; window = window->m_next)
 			window->update();
 
+	// frame delay
+	windows_options &winopt = downcast<windows_options &>(options());
+	if (!skip_redraw && !machine().video().throttled() && winopt.frame_delay() > 0)
+	{
+		osd_ticks_t delay = (osd_ticks_t) winopt.frame_delay();
+		if (delay > 0)
+		{
+			osd_ticks_t tps = osd_ticks_per_second();
+			osd_sleep(tps * MIN(delay, 16) / 1000);
+		}
+	}
+
 	// poll the joystick values here
 	winwindow_process_events(machine(), TRUE, FALSE);
 	wininput_poll(machine());
