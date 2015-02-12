@@ -1,5 +1,11 @@
 # WinMame
 
+## Requirements
+
+Operating system : Windows Vista and newer (7, 8, 8.1).
+
+Windows XP is **NOT** supported.
+
 ## Features
 
 **Direct3D & VSync fix**
