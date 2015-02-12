@@ -2,17 +2,20 @@
 
 ## Features
 
-**Better Direct3D & VSync support**
+**Direct3D & VSync fix**
 
     Using Direct3D video mode with -waitvsync option doesn't add 2-3 frames of lag anymore.
 
-**Frame delay option**
+**Frame delay**
 
-    A -frame_delay (-fd) option has been added in order to reduce input lag in unthrottled + vsync mode.
-    Choose a value between 0-16 ms of additionnal delay between frames to process users input.
-    On a modern computer a value of 8 ms gives good results.
+    -frame_delay <0-16> (ms)
+    -fd <0-16> (ms)
 
-**Throttle threshold option**
+    Adds 0 to 16 milliseconds of delay between frames to process users input.
+    For example, on a modern computer a value of 8 ms gives good results.
+    Only available if vsync is enabled.
+
+**Throttle threshold**
 
     -throttle_threshold <percent_error>
     -tt <percent_error>
@@ -26,6 +29,6 @@
     unthrottled at 60Hz if vsync is enabled. The animation will be perfectly smooth.
     The game will be sightly faster (by a very small margin).
 
-**Enhanced skip_gameinfo option**
+**Skip game info**
 
     The -skip_gameinfo (-sgi) option now hides the game disclaimer, warning and loading popup message.
