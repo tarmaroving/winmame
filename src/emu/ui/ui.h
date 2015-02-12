@@ -22,12 +22,12 @@
 ***************************************************************************/
 
 /* preferred font height; use ui_get_line_height() to get actual height */
-#define UI_TARGET_FONT_ROWS     (30)
+#define UI_TARGET_FONT_ROWS     (25)
 #define UI_TARGET_FONT_HEIGHT   (1.0f / (float)UI_TARGET_FONT_ROWS)
 #define UI_MAX_FONT_HEIGHT      (1.0f / 15.0f)
 
 /* width of lines drawn in the UI */
-#define UI_LINE_WIDTH           (1.0f)
+#define UI_LINE_WIDTH           (1.0f / 1000.0f)
 
 /* border between outlines and inner text on left/right and top/bottom sides */
 #define UI_BOX_LR_BORDER        (UI_TARGET_FONT_HEIGHT * 0.25f)
@@ -36,10 +36,10 @@
 /* handy colors */
 #define ARGB_WHITE              rgb_t(0xff,0xff,0xff,0xff)
 #define ARGB_BLACK              rgb_t(0xff,0x00,0x00,0x00)
-#define UI_BORDER_COLOR         rgb_t(0xf5,0x69,0x91,0xff)
+#define UI_BORDER_COLOR         rgb_t(0xff,0xff,0xff,0xff)
 #define UI_BACKGROUND_COLOR     rgb_t(0xef,0x10,0x10,0x30)
 #define UI_GFXVIEWER_BG_COLOR   rgb_t(0xef,0x10,0x10,0x30)
-#define UI_GREEN_COLOR          rgb_t(0xff,0xa0,0xc5,0x5f)
+#define UI_GREEN_COLOR          rgb_t(0xef,0x10,0x60,0x10)
 #define UI_YELLOW_COLOR         rgb_t(0xef,0x60,0x60,0x10)
 #define UI_RED_COLOR            rgb_t(0xf0,0x60,0x10,0x10)
 #define UI_UNAVAILABLE_COLOR    rgb_t(0xff,0x40,0x40,0x40)
