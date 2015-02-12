@@ -227,11 +227,14 @@ void video_manager::frame_update(bool debug)
 		float threshold = machine().options().throttle_threshold() / 100.0f;
 		float target_refresh = ATTOSECONDS_TO_HZ(machine().first_screen()->refresh_attoseconds());
 		float current_refresh = machine().render().max_update_rate();
-		float refresh_min = target_refresh * (1.0 - threshold);
-		float refresh_max = target_refresh * (1.0 + threshold);
-		if (current_refresh >= refresh_min && current_refresh <= refresh_max)
-			set_throttled(false);
-		m_throttle_threshold_check = false;
+		if(current_refresh > 0)
+		{
+			float refresh_min = target_refresh * (1.0 - threshold);
+			float refresh_max = target_refresh * (1.0 + threshold);
+			if (current_refresh >= refresh_min && current_refresh <= refresh_max)
+				set_throttled(false);
+			m_throttle_threshold_check = false;
+		}
 	}
 	
 	// ask the OSD to update
