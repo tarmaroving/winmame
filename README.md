@@ -43,3 +43,12 @@ Windows XP is **NOT** supported.
     -sgi
     
     Skips game info, disclaimer, warnings and loading popup message.
+
+## Examples
+Dual core 2Ghz+ computer, LCD monitor
+
+    mame.exe -sgi -waitvsync -tt 3 -fd 8 -gamma 0.8
+
+Slow computer, LCD monitor
+
+    mame.exe -sgi -waitvsync -tt 3 -gamma 0.8
