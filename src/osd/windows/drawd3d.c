@@ -204,6 +204,11 @@ static int drawd3d_window_init(win_window_info *window)
 		osd_printf_error("Unable to initialize Direct3D.\n");
 		return 1;
 	}
+	else
+	{
+		// set max update rate and bounds
+		drawd3d_window_get_primitives(window);
+	}
 
 	return 0;
 }
