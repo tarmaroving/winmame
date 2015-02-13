@@ -27,7 +27,7 @@
 #define UI_MAX_FONT_HEIGHT      (1.0f / 15.0f)
 
 /* width of lines drawn in the UI */
-#define UI_LINE_WIDTH           (1.0f / 1000.0f)
+#define UI_LINE_WIDTH           (1.0f / 500.0f)
 
 /* border between outlines and inner text on left/right and top/bottom sides */
 #define UI_BOX_LR_BORDER        (UI_TARGET_FONT_HEIGHT * 0.25f)
