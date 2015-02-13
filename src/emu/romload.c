@@ -631,6 +631,7 @@ static int open_rom_file(romload_private *romdata, const char *regiontag, const 
 	UINT32 romsize = rom_file_size(romp);
 	tried_file_names = "";
 
+	/* update status display */
 	display_loading_rom_message(romdata, ROM_GETNAME(romp), from_list);
 
 	/* extract CRC to use for searching */
