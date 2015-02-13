@@ -990,7 +990,10 @@ void video_manager::update_refresh_speed()
 					min_frame_period = MIN(min_frame_period, period);
 			}
 
-			UINT32 target_speed = minrefresh * 1000.0 / ATTOSECONDS_TO_HZ(min_frame_period);
+			// compute a target speed as an integral percentage
+			// note that we lop 0.25Hz off of the minrefresh when doing the computation to allow for
+			// the fact that most refresh rates are not accurate to 10 digits...
+			UINT32 target_speed = floor((minrefresh - 0.25f) * 1000.0 / ATTOSECONDS_TO_HZ(min_frame_period));
 			UINT32 original_speed = original_speed_setting();
 			target_speed = MIN(target_speed, original_speed);
 
