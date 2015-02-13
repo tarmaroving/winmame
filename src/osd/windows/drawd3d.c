@@ -192,6 +192,11 @@ int d3d::renderer::init()
 		osd_printf_error("Unable to initialize Direct3D.\n");
 		return 1;
 	}
+	else
+	{
+		// set max update rate and bounds
+		drawd3d_window_get_primitives(window);
+	}
 
 	return 0;
 }
@@ -1939,7 +1944,9 @@ texture_info::texture_info(texture_manager *manager, const render_texinfo* texso
 	if (!PRIMFLAG_GET_SCREENTEX(flags))
 	{
 		assert(PRIMFLAG_TEXFORMAT(flags) != TEXFORMAT_YUY16);
-		result = (*d3dintf->device.create_texture)(m_renderer->get_device(), m_rawdims.c.x, m_rawdims.c.y, 1, 0, D3DFMT_A8R8G8B8, D3DPOOL_MANAGED, &m_d3dtex);
+		DWORD usage = m_texture_manager->is_dynamic_supported() ? D3DUSAGE_DYNAMIC : 0;
+		D3DPOOL pool = m_texture_manager->is_dynamic_supported() ? D3DPOOL_DEFAULT : D3DPOOL_MANAGED;
+		result = (*d3dintf->device.create_texture)(m_renderer->get_device(), m_rawdims.c.x, m_rawdims.c.y, 1, usage, D3DFMT_A8R8G8B8, pool, &m_d3dtex);
 		if (result != D3D_OK)
 			goto error;
 		m_d3dfinaltex = m_d3dtex;

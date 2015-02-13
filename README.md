@@ -1,39 +1,54 @@
-What is MAME?
-=============
+# WinMame
 
-MAME stands for Multiple Arcade Machine Emulator.
+## Requirements
 
-MAME's purpose is to preserve decades of video-game history. As gaming technology continues to rush forward, MAME prevents these important "vintage" games from being lost and forgotten. This is achieved by documenting the hardware and how it functions. The source code to MAME serves as this documentation. The fact that the games are playable serves primarily to validate the accuracy of the documentation (how else can you prove that you have recreated the hardware faithfully?).
+Operating system : Windows Vista and newer (7, 8, 8.1).
 
-What is MESS?
-=============
+Windows XP is **NOT** supported.
 
-MESS (Multi Emulator Super System) is the sister project of MAME. MESS documents the hardware for a wide variety of (mostly vintage) computers, video game consoles, and calculators, as MAME does for arcade games.
+## Features
 
-The MESS and MAME projects live in the same source repository and share much of the same code, but are different build targets.
+**Direct3D & VSync fix**
 
-How to compile?
-=============
+    Using Direct3D video mode with -waitvsync option doesn't add 2-3 frames of lag anymore.
 
-If you're on a *nix system, it could be as easy as typing
+**Frame delay**
 
-```
-make
-```
+    -frame_delay <0-16>
+    -fd <0-16>
 
-for a MAME build, or
+    Adds 0 to 16 milliseconds of delay between frames to process users input.
+    For example, on a modern computer a value of 8 ms can give great results.
+    Depending of your computer and the games you are playing this value must be tweaked.
+    Only available if vsync is enabled.
 
-```
-make TARGET=mess
-```
+**Throttle threshold**
 
-for a MESS build (provided you have all the [prerequisites](http://forums.bannister.org/ubbthreads.php?ubb=showflat&Number=35138)).
+    -throttle_threshold <percent_error>
+    -tt <percent_error>
+    
+    Detects if a game is running natively at the same refresh rate of your main monitor.
+    If the vsync option is enabled and the refresh rates matches then unthrottled mode
+    is activated to have perfect smooth animation.
+    
+    Example : -tt 3
+    If game X runs natively at 59Hz and your screen refresh rate is 60Hz.
+    With a percent_error of 3% the frequencies are considered equals so the game will run
+    unthrottled at 60Hz if vsync is enabled. The animation will be perfectly smooth.
+    The game will be sightly faster (by a very small margin).
 
-For Windows users, we provide a ready-made [build environment](http://mamedev.org/tools/) based on MinGW-w64. [Visual Studio builds](http://wiki.mamedev.org/index.php?title=Building_MAME_using_Microsoft_Visual_Studio_compilers) are also possible.
+**Skip game info**
+    
+    -skip_gameinfo
+    -si
+    
+    Skips game info, disclaimer, warnings and loading popup message.
 
-Where can I find out more?
-=============
+## Examples
+Dual core 2Ghz+ computer, LCD monitor
 
-* [Official MAME Development Team Site](http://mamedev.org/) (includes binary downloads for MAME and MESS, wiki, forums, and more)
-* [Official MESS Wiki](http://www.mess.org/)
-* [MAME Testers](http://mametesters.org/) (official bug tracker for MAME and MESS)
+    mame.exe -sgi -waitvsync -tt 3 -fd 8 -gamma 0.8
+
+Slow computer, LCD monitor
+
+    mame.exe -sgi -waitvsync -tt 3 -gamma 0.8

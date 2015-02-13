@@ -1410,26 +1410,6 @@ render_primitive_list &render_target::get_primitives()
 			}
 		}
 
-	// if we are not in the running stage, draw an outer box
-	else
-	{
-		render_primitive *prim = list.alloc(render_primitive::QUAD);
-		set_render_bounds_xy(&prim->bounds, 0.0f, 0.0f, (float)m_width, (float)m_height);
-		set_render_color(&prim->color, 1.0f, 1.0f, 1.0f, 1.0f);
-		prim->texture.base = NULL;
-		prim->flags = PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA);
-		list.append(*prim);
-
-		if (m_width > 1 && m_height > 1)
-		{
-			prim = list.alloc(render_primitive::QUAD);
-			set_render_bounds_xy(&prim->bounds, 1.0f, 1.0f, (float)(m_width - 1), (float)(m_height - 1));
-			set_render_color(&prim->color, 1.0f, 0.0f, 0.0f, 0.0f);
-			prim->texture.base = NULL;
-			prim->flags = PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA);
-			list.append(*prim);
-		}
-	}
 
 	// process the debug containers
 	for (render_container *debug = m_debug_containers.first(); debug != NULL; debug = debug->next())

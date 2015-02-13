@@ -26,7 +26,7 @@
 //  TYPE DEFINITIONS
 //============================================================
 
-typedef IDirect3D9 *(WINAPI *direct3dcreate9_ptr)(UINT SDKVersion);
+typedef HRESULT (WINAPI *direct3dcreate9ex_ptr)(UINT SDKVersion, IDirect3D9Ex **ppD3D);
 
 namespace d3d
 {
@@ -60,6 +60,16 @@ INLINE void convert_present_params(const present_parameters *params, D3DPRESENT_
 }
 
 
+INLINE void convert_display_mode_d3d9params(const D3DPRESENT_PARAMETERS *d3d9params, D3DDISPLAYMODEEX *displaymode)
+{
+	memset(displaymode, 0, sizeof(D3DDISPLAYMODEEX));
+	displaymode->Size = sizeof(D3DDISPLAYMODEEX);
+	displaymode->Width = d3d9params->BackBufferWidth;
+	displaymode->Height = d3d9params->BackBufferHeight;
+	displaymode->RefreshRate = d3d9params->FullScreen_RefreshRateInHz;
+	displaymode->Format = d3d9params->BackBufferFormat;
+	displaymode->ScanLineOrdering = D3DSCANLINEORDERING_PROGRESSIVE;
+}
 
 //============================================================
 //  drawd3d9_init
@@ -78,20 +88,21 @@ base *drawd3d9_init(void)
 	}
 
 	// import the create function
-	direct3dcreate9_ptr direct3dcreate9 = (direct3dcreate9_ptr)GetProcAddress(dllhandle, "Direct3DCreate9");
-	if (direct3dcreate9 == NULL)
+	direct3dcreate9ex_ptr direct3dcreate9ex = (direct3dcreate9ex_ptr)GetProcAddress(dllhandle, "Direct3DCreate9Ex");
+	if (direct3dcreate9ex == NULL)
 	{
-		osd_printf_verbose("Direct3D: Unable to find Direct3DCreate9\n");
+		osd_printf_verbose("Direct3D: Unable to find Direct3DCreate9Ex\n");
 		FreeLibrary(dllhandle);
 		dllhandle = NULL;
 		return NULL;
 	}
 
 	// create our core direct 3d object
-	IDirect3D9 *d3d9 = (*direct3dcreate9)(D3D_SDK_VERSION);
+	IDirect3D9Ex *d3d9 = NULL;
+	(*direct3dcreate9ex)(D3D_SDK_VERSION, &d3d9);
 	if (d3d9 == NULL)
 	{
-		osd_printf_verbose("Direct3D: Error attempting to initialize Direct3D9\n");
+		osd_printf_verbose("Direct3D: Error attempting to initialize Direct3D9Ex\n");
 		FreeLibrary(dllhandle);
 		dllhandle = NULL;
 		return NULL;
@@ -149,10 +160,31 @@ static HRESULT check_device_type(base *d3dptr, UINT adapter, D3DDEVTYPE devtype,
 
 static HRESULT create_device(base *d3dptr, UINT adapter, D3DDEVTYPE devtype, HWND focus, DWORD behavior, present_parameters *params, device **dev)
 {
-	IDirect3D9 *d3d9 = (IDirect3D9 *)d3dptr->d3dobj;
+	HRESULT result;
+	IDirect3D9Ex *d3d9ex = (IDirect3D9Ex *) d3dptr->d3dobj;
 	D3DPRESENT_PARAMETERS d3d9params;
 	convert_present_params(params, &d3d9params);
-	return IDirect3D9_CreateDevice(d3d9, adapter, devtype, focus, behavior, &d3d9params, (IDirect3DDevice9 **)dev);
+	
+	if (params->Windowed)
+	{
+		result = d3d9ex->CreateDeviceEx(adapter, devtype, focus, behavior, &d3d9params, NULL, (IDirect3DDevice9Ex **) dev);
+	}
+	else
+	{
+		D3DDISPLAYMODEEX displaymode;
+		convert_display_mode_d3d9params(&d3d9params, &displaymode);
+		result = d3d9ex->CreateDeviceEx(adapter, devtype, focus, behavior, &d3d9params, &displaymode, (IDirect3DDevice9Ex **) dev);
+	}
+	
+	if (result == D3D_OK)
+	{
+		HRESULT latency_ok = IDirect3DDevice9Ex_SetMaximumFrameLatency((IDirect3DDevice9Ex *) *dev, 1);
+		if (latency_ok != D3D_OK)
+		{
+			osd_printf_error("Unable to set Direct3D device maximum frame latency\n");
+		}
+	}
+	return result;
 }
 
 static HRESULT enum_adapter_modes(base *d3dptr, UINT adapter, D3DFORMAT format, UINT index, D3DDISPLAYMODE *mode)
@@ -236,8 +268,8 @@ static HRESULT get_caps_dword(base *d3dptr, UINT adapter, D3DDEVTYPE devtype, ca
 
 static ULONG release(base *d3dptr)
 {
-	IDirect3D9 *d3d9 = (IDirect3D9 *)d3dptr->d3dobj;
-	ULONG result = IDirect3D9_Release(d3d9);
+	IDirect3D9Ex *d3d9 = (IDirect3D9Ex *)d3dptr->d3dobj;
+	ULONG result = IDirect3D9Ex_Release(d3d9);
 	FreeLibrary(d3dptr->dllhandle);
 	global_free(d3dptr);
 	return result;
@@ -335,35 +367,49 @@ static HRESULT device_get_render_target_data(device *dev, surface *rendertarget,
 
 static HRESULT device_present(device *dev, const RECT *source, const RECT *dest, HWND override, RGNDATA *dirty, DWORD flags)
 {
-	IDirect3DDevice9 *device = (IDirect3DDevice9 *)dev;
+	IDirect3DDevice9Ex *device = (IDirect3DDevice9Ex *)dev;
+	
 	if (flags != 0)
 	{
 		IDirect3DSwapChain9 *chain;
-		HRESULT result = IDirect3DDevice9_GetSwapChain(device, 0, &chain);
+		HRESULT result = IDirect3DDevice9Ex_GetSwapChain(device, 0, &chain);
 		if (result == D3D_OK)
 		{
-			result = IDirect3DSwapChain9_Present(chain, source, dest, override, dirty, flags);
-			IDirect3DSwapChain9_Release(chain);
+			result = IDirect3DSwapChain9Ex_Present(chain, source, dest, override, dirty, flags);
+			IDirect3DSwapChain9Ex_Release(chain);
 			return result;
 		}
 	}
-	return IDirect3DDevice9_Present(device, source, dest, override, dirty);
+	return IDirect3DDevice9Ex_Present(device, source, dest, override, dirty);
 }
 
 
 static ULONG device_release(device *dev)
 {
-	IDirect3DDevice9 *device = (IDirect3DDevice9 *)dev;
-	return IDirect3DDevice9_Release(device);
+	IDirect3DDevice9Ex *device = (IDirect3DDevice9Ex *)dev;
+	return IDirect3DDevice9Ex_Release(device);
 }
 
 
 static HRESULT device_reset(device *dev, present_parameters *params)
 {
-	IDirect3DDevice9 *device = (IDirect3DDevice9 *)dev;
+	HRESULT result;
+	IDirect3DDevice9Ex *device = (IDirect3DDevice9Ex *)dev;
 	D3DPRESENT_PARAMETERS d3d9params;
 	convert_present_params(params, &d3d9params);
-	return IDirect3DDevice9_Reset(device, &d3d9params);
+	
+	if (params->Windowed)
+	{
+		result = IDirect3DDevice9Ex_ResetEx(device, &d3d9params, NULL);
+	}
+	else
+	{
+		D3DDISPLAYMODEEX displaymode;
+		convert_display_mode_d3d9params(&d3d9params, &displaymode);
+		result = IDirect3DDevice9Ex_ResetEx(device, &d3d9params, &displaymode);
+	}
+	
+	return result;
 }
 
 
@@ -461,8 +507,8 @@ static HRESULT device_stretch_rect(device *dev, surface *source, const RECT *src
 
 static HRESULT device_test_cooperative_level(device *dev)
 {
-	IDirect3DDevice9 *device = (IDirect3DDevice9 *)dev;
-	return IDirect3DDevice9_TestCooperativeLevel(device);
+	IDirect3DDevice9Ex *device = (IDirect3DDevice9Ex *) dev;
+	return IDirect3DDevice9Ex_CheckDeviceState(device, NULL);
 }
 
 

@@ -257,6 +257,7 @@ const options_entry windows_options::s_option_entries[] =
 	{ NULL,                                           NULL,       OPTION_HEADER,     "WINDOWS PERFORMANCE OPTIONS" },
 	{ WINOPTION_PRIORITY "(-15-1)",                   "0",        OPTION_INTEGER,    "thread priority for the main game thread; range from -15 to 1" },
 	{ WINOPTION_PROFILE,                              "0",        OPTION_INTEGER,    "enable profiling, specifying the stack depth to track" },
+	{ WINOPTION_FRAME_DELAY";fd",                     "0",        OPTION_INTEGER,    "add (0-16) milliseconds of delay between frames to reduce input lag (only if unthrottled)" },
 
 	// video options
 	{ NULL,                                           NULL,       OPTION_HEADER,     "WINDOWS VIDEO OPTIONS" },

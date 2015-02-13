@@ -110,6 +110,7 @@ private:
 	void update_throttle(attotime emutime);
 	osd_ticks_t throttle_until_ticks(osd_ticks_t target_ticks);
 	void update_frameskip();
+	void update_throttle_threshold();
 	void update_refresh_speed();
 	void recompute_speed(const attotime &emutime);
 

@@ -112,6 +112,9 @@ video_manager::video_manager(running_machine &machine)
 	machine.add_notifier(MACHINE_NOTIFY_EXIT, machine_notify_delegate(FUNC(video_manager::exit), this));
 	machine.save().register_postload(save_prepost_delegate(FUNC(video_manager::postload), this));
 
+	// check if we should disable throttling
+	update_throttle_threshold();
+
 	// extract initial execution state from global configuration settings
 	update_refresh_speed();
 
@@ -937,6 +940,31 @@ void video_manager::update_frameskip()
 	m_skipping_this_frame = s_skiptable[effective_frameskip()][m_frameskip_counter];
 }
 
+//-------------------------------------------------
+//  update_throttle_threshold
+//  check if we should disable throttling
+//-------------------------------------------------
+
+void video_manager::update_throttle_threshold()
+{
+	if (throttled() && machine().osd().wait_vsync())
+	{
+		float threshold = machine().options().throttle_threshold() / 100.0f;
+		float target_refresh = ATTOSECONDS_TO_HZ(machine().first_screen()->refresh_attoseconds());
+		float current_refresh = machine().render().max_update_rate();
+		
+		if(current_refresh > 0 && target_refresh > 0)
+		{
+			float refresh_min = target_refresh * (1.0 - threshold);
+			float refresh_max = target_refresh * (1.0 + threshold);
+			if (current_refresh >= refresh_min && current_refresh <= refresh_max)
+			{
+				set_throttled(false);
+				osd_printf_info("Throttling disabled (speed %.2f%%)\n", 100.0 * current_refresh / target_refresh);
+			}
+		}
+	}
+}
 
 //-------------------------------------------------
 //  update_refresh_speed - update the m_speed

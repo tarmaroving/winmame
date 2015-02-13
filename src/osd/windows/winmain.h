@@ -22,6 +22,7 @@
 // performance options
 #define WINOPTION_PRIORITY              "priority"
 #define WINOPTION_PROFILE               "profile"
+#define WINOPTION_FRAME_DELAY           "frame_delay"
 
 // video options
 #define WINOPTION_PRESCALE              "prescale"
@@ -127,6 +128,7 @@ public:
 	// performance options
 	int priority() const { return int_value(WINOPTION_PRIORITY); }
 	int profile() const { return int_value(WINOPTION_PROFILE); }
+	int frame_delay() const { return int_value(WINOPTION_FRAME_DELAY); }
 
 	// video options
 	int prescale() const { return int_value(WINOPTION_PRESCALE); }

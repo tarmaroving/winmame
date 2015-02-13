@@ -73,6 +73,9 @@ public:
 
 	// midi interface
 	virtual osd_midi_device *create_midi_device() = 0;
+	
+	// are we using the wait vsync option
+	virtual bool wait_vsync() = 0;
 
 };
 
