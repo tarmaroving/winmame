@@ -106,12 +106,14 @@ video_manager::video_manager(running_machine &machine)
 		m_avi_file(NULL),
 		m_avi_frame_period(attotime::zero),
 		m_avi_next_frame_time(attotime::zero),
-		m_avi_frame(0),
-		m_throttle_threshold_check(true)
+		m_avi_frame(0)
 {
 	// request a callback upon exiting
 	machine.add_notifier(MACHINE_NOTIFY_EXIT, machine_notify_delegate(FUNC(video_manager::exit), this));
 	machine.save().register_postload(save_prepost_delegate(FUNC(video_manager::postload), this));
+
+	// check if we should disable throttling
+	update_throttle_threshold();
 
 	// extract initial execution state from global configuration settings
 	update_refresh_speed();
@@ -219,27 +221,6 @@ void video_manager::frame_update(bool debug)
 	if (!debug && !skipped_it && effective_throttle())
 		update_throttle(current_time);
 
-	// if game refresh rate is close to display refresh rate we can simply
-	// stop throttling and let the game run at the display refresh rate so
-	// the animations will be perfectly smooth
-	if (m_throttle_threshold_check && effective_throttle() && machine().osd().wait_vsync())
-	{
-		float threshold = machine().options().throttle_threshold() / 100.0f;
-		float target_refresh = ATTOSECONDS_TO_HZ(machine().first_screen()->refresh_attoseconds());
-		float current_refresh = machine().render().max_update_rate();
-		if(current_refresh > 0 && target_refresh > 0)
-		{
-			float refresh_min = target_refresh * (1.0 - threshold);
-			float refresh_max = target_refresh * (1.0 + threshold);
-			if (current_refresh >= refresh_min && current_refresh <= refresh_max)
-			{
-				set_throttled(false);
-				osd_printf_info("Throttling disabled (speed %.2f%%)\n", 100.0 * current_refresh / target_refresh);
-			}
-			m_throttle_threshold_check = false;
-		}
-	}
-	
 	// ask the OSD to update
 	g_profiler.start(PROFILER_BLIT);
 	machine().osd().update(!debug && skipped_it);
@@ -959,6 +940,31 @@ void video_manager::update_frameskip()
 	m_skipping_this_frame = s_skiptable[effective_frameskip()][m_frameskip_counter];
 }
 
+//-------------------------------------------------
+//  update_throttle_threshold
+//  check if we should disable throttling
+//-------------------------------------------------
+
+void video_manager::update_throttle_threshold()
+{
+	if (throttled() && machine().osd().wait_vsync())
+	{
+		float threshold = machine().options().throttle_threshold() / 100.0f;
+		float target_refresh = ATTOSECONDS_TO_HZ(machine().first_screen()->refresh_attoseconds());
+		float current_refresh = machine().render().max_update_rate();
+		
+		if(current_refresh > 0 && target_refresh > 0)
+		{
+			float refresh_min = target_refresh * (1.0 - threshold);
+			float refresh_max = target_refresh * (1.0 + threshold);
+			if (current_refresh >= refresh_min && current_refresh <= refresh_max)
+			{
+				set_throttled(false);
+				osd_printf_info("Throttling disabled (speed %.2f%%)\n", 100.0 * current_refresh / target_refresh);
+			}
+		}
+	}
+}
 
 //-------------------------------------------------
 //  update_refresh_speed - update the m_speed
