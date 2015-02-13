@@ -40,7 +40,7 @@ Windows XP is **NOT** supported.
 **Skip game info**
     
     -skip_gameinfo
-    -sgi
+    -si
     
     Skips game info, disclaimer, warnings and loading popup message.
 
