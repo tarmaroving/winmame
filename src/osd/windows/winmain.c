@@ -271,6 +271,7 @@ const options_entry windows_options::s_option_entries[] =
 	// Direct3D-specific options
 	{ NULL,                                           NULL,       OPTION_HEADER,     "DIRECT3D-SPECIFIC OPTIONS" },
 	{ WINOPTION_FILTER ";d3dfilter;flt",              "1",        OPTION_BOOLEAN,    "enable bilinear filtering on screen output" },
+	{ WINOPTION_SHADER,                               "none",     OPTION_STRING,     "path to shader hlsl file" },
 
 	// post-processing options
 	{ NULL,                                                     NULL,        OPTION_HEADER,     "DIRECT3D POST-PROCESSING OPTIONS" },

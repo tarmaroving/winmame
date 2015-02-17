@@ -33,6 +33,7 @@
 
 // Direct3D-specific options
 #define WINOPTION_FILTER                "filter"
+#define WINOPTION_SHADER                "shader"
 
 // core post-processing options
 #define WINOPTION_HLSL_ENABLE               "hlsl_enable"
@@ -139,6 +140,7 @@ public:
 
 	// Direct3D-specific options
 	bool filter() const { return bool_value(WINOPTION_FILTER); }
+	const char *shader() const { return value(WINOPTION_SHADER); }
 
 	// core post-processing options
 	const char *screen_post_fx_dir() const { return value(WINOPTION_HLSLPATH); }

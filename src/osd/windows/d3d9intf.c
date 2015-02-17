@@ -19,7 +19,7 @@
 // MAMEOS headers
 #include "d3dintf.h"
 #include "winmain.h"
-
+#include "strconv.h"
 
 
 //============================================================
@@ -27,9 +27,14 @@
 //============================================================
 
 typedef HRESULT (WINAPI *direct3dcreate9ex_ptr)(UINT SDKVersion, IDirect3D9Ex **ppD3D);
+typedef HRESULT (WINAPI *direct3dx9_loadeffect_ptr)(LPDIRECT3DDEVICE9 pDevice, LPCTSTR pSrcFile, const D3DXMACRO *pDefines, LPD3DXINCLUDE pInclude, DWORD Flags, LPD3DXEFFECTPOOL pPool, LPD3DXEFFECT *ppEffect, LPD3DXBUFFER *ppCompilationErrors);
 
 namespace d3d
 {
+
+static direct3dx9_loadeffect_ptr g_load_effect = NULL;
+static ID3DXEffect *g_effect = NULL;
+
 //============================================================
 //  PROTOTYPES
 //============================================================
@@ -124,6 +129,14 @@ base *drawd3d9_init(void)
 	{
 		osd_printf_verbose("Direct3D: Warning - Unable find any D3D9 DLLs; disabling post-effect rendering\n");
 		post_available = false;
+	}
+	else
+	{
+		g_load_effect = (direct3dx9_loadeffect_ptr)GetProcAddress(fxhandle, "D3DXCreateEffectFromFileW");
+		if (g_load_effect == NULL)
+		{
+			osd_printf_verbose("Direct3D: Unable to find D3DXCreateEffectFromFileW\n");
+		}
 	}
 
 	// allocate an object to hold our data
@@ -271,6 +284,7 @@ static ULONG release(base *d3dptr)
 	IDirect3D9Ex *d3d9 = (IDirect3D9Ex *)d3dptr->d3dobj;
 	ULONG result = IDirect3D9Ex_Release(d3d9);
 	FreeLibrary(d3dptr->dllhandle);
+	if (d3dptr->libhandle != NULL) FreeLibrary(d3dptr->libhandle);
 	global_free(d3dptr);
 	return result;
 }
@@ -387,6 +401,11 @@ static HRESULT device_present(device *dev, const RECT *source, const RECT *dest,
 static ULONG device_release(device *dev)
 {
 	IDirect3DDevice9Ex *device = (IDirect3DDevice9Ex *)dev;
+	if (g_effect != NULL)
+	{
+		g_effect->Release();
+		g_effect = NULL;
+	}
 	return IDirect3DDevice9Ex_Release(device);
 }
 
@@ -453,8 +472,21 @@ static HRESULT device_set_stream_source(device *dev, UINT number, vertex_buffer 
 static HRESULT device_set_texture(device *dev, DWORD stage, texture *tex)
 {
 	IDirect3DDevice9 *device = (IDirect3DDevice9 *)dev;
-	IDirect3DBaseTexture9 *texture = (IDirect3DBaseTexture9 *)tex;
-	return IDirect3DDevice9_SetTexture(device, stage, texture);
+	return IDirect3DDevice9_SetTexture(device, stage, (IDirect3DBaseTexture9*)tex);
+}
+
+
+static HRESULT device_shader_set_texture(device *dev, DWORD stage, texture *tex, UINT w, UINT h, UINT o)
+{
+	IDirect3DTexture9 *texture = (IDirect3DTexture9 *)tex;
+	if (g_effect != NULL)
+	{
+		g_effect->SetTexture("Diffuse", texture);
+		g_effect->SetInt("GameWidth", w);
+		g_effect->SetInt("GameHeight", h);
+		g_effect->SetInt("GameOrientation", o);
+	}
+	return device_set_texture(dev, stage, tex);
 }
 
 
@@ -512,6 +544,78 @@ static HRESULT device_test_cooperative_level(device *dev)
 }
 
 
+static HRESULT device_set_shader(device *dev, const char *path)
+{
+	LPD3DXBUFFER buffer_errors = NULL;
+	char name_cstr[1024];
+	sprintf(name_cstr, "%s", path);
+	TCHAR *effect_name = tstring_from_utf8(name_cstr);
+	
+	if (g_effect != NULL)
+	{
+		g_effect->Release();
+		g_effect = NULL;
+	}
+	
+	HRESULT load_result = (*g_load_effect)((IDirect3DDevice9Ex *) dev, effect_name, NULL, NULL, 0, NULL, &g_effect, &buffer_errors);
+	if (FAILED(load_result))
+	{
+		if(buffer_errors != NULL)
+		{
+			LPVOID compile_errors = buffer_errors->GetBufferPointer();
+			osd_printf_error("Direct3D: Unable to compile shader: %s\n", (const char*)compile_errors);
+		}
+		else
+		{
+			osd_printf_error("Direct3D: Shader %s is missing, corrupt or cannot be compiled.\n", path);
+		}
+	}
+	else
+	{
+		D3DXHANDLE technique;
+		if (g_effect->FindNextValidTechnique(NULL, &technique) == D3D_OK)
+		{
+			g_effect->SetTechnique(technique);
+			osd_printf_verbose("Direct3D: Shader %s loaded.\n", path);
+		}
+		else
+		{
+			g_effect->Release();
+			g_effect = NULL;
+			load_result = E_FAIL;
+			osd_printf_error("Direct3D: Shader error: no valid technique found.\n");
+		}
+	}
+
+	osd_free(effect_name);
+	return load_result;
+}
+
+
+static HRESULT device_shader_draw_primitive(device *dev, D3DPRIMITIVETYPE type, UINT start, UINT count)
+{
+	HRESULT result = E_NOTIMPL;
+	if (g_effect != NULL)
+	{
+		UINT num_passes = 0;
+		g_effect->Begin(&num_passes, 0);
+		for (UINT pass = 0; pass < num_passes; pass++)
+		{
+			g_effect->BeginPass(pass);
+			result = device_draw_primitive(dev, type, start, count);
+			if (result != D3D_OK) osd_printf_verbose("Direct3D: Error %08X during device draw_primitive call\n", (int)result);
+			g_effect->EndPass();
+		}
+		g_effect->End();
+	}
+	else
+	{
+	    result = device_draw_primitive(dev, type, start, count);
+	}
+	return result;
+}
+
+
 static const device_interface d3d9_device_interface =
 {
 	device_begin_scene,
@@ -533,10 +637,13 @@ static const device_interface d3d9_device_interface =
 	device_set_render_target,
 	device_set_stream_source,
 	device_set_texture,
+	device_shader_set_texture,
 	device_set_texture_stage_state,
 	device_set_vertex_format,
 	device_stretch_rect,
-	device_test_cooperative_level
+	device_test_cooperative_level,
+	device_set_shader,
+	device_shader_draw_primitive
 };
 
 

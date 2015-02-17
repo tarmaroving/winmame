@@ -335,15 +335,28 @@ static int drawd3d_window_draw(win_window_info *window, HDC dc, int update)
 
 namespace d3d
 {
-void renderer::set_texture(texture_info *texture)
+void renderer::set_texture(texture_info *texture, UINT32 flags)
 {
 	if (texture != m_last_texture)
 	{
 		m_last_texture = texture;
 		m_last_texture_flags = (texture == NULL ? 0 : texture->get_flags());
-		HRESULT result = (*d3dintf->device.set_texture)(m_device, 0, (texture == NULL) ? get_default_texture()->get_finaltex() : texture->get_finaltex());
+		if (PRIMFLAG_GET_SCREENTEX(flags))
+		{
+			vec2f& dims = texture->get_rawdims();
+			vec2f delta = texture->get_uvstop() - texture->get_uvstart();
+			float w = dims.c.x * delta.c.x;
+			float h = dims.c.y * delta.c.y;
+			int o = PRIMFLAG_GET_TEXORIENT(flags);
+			HRESULT result = (*d3dintf->device.shader_set_texture)(m_device, 0, texture->get_finaltex(), w, h, o);
+			if (result != D3D_OK) osd_printf_verbose("Direct3D: Error %08X during device set_texture call\n", (int)result);
+		}
+		else
+		{
+			HRESULT result = (*d3dintf->device.set_texture)(m_device, 0, (texture == NULL) ? get_default_texture()->get_finaltex() : texture->get_finaltex());
+			if (result != D3D_OK) osd_printf_verbose("Direct3D: Error %08X during device set_texture call\n", (int)result);
+		}
 		m_shaders->set_texture(texture);
-		if (result != D3D_OK) osd_printf_verbose("Direct3D: Error %08X during device set_texture call\n", (int)result);
 	}
 }
 
@@ -957,6 +970,12 @@ try_again:
 				(*d3dintf->device.set_gamma_ramp)(m_device, 0, &ramp);
 			}
 		}
+	}
+
+	windows_options &options = downcast<windows_options &>(m_window->machine().options());
+	if (strcmp(options.shader(), "none") != 0)
+	{
+		(*d3dintf->device.set_shader)(m_device, options.shader());
 	}
 
 	int ret = m_shaders->create_resources(false);
@@ -1869,7 +1888,7 @@ void renderer::primitive_flush_pending()
 		int newfilter;
 
 		// set the texture if different
-		set_texture(texture);
+		set_texture(texture, flags);
 
 		// set filtering if different
 		if (texture != NULL)
@@ -1902,8 +1921,10 @@ void renderer::primitive_flush_pending()
 		else
 		{
 			// add the primitives
-			result = (*d3dintf->device.draw_primitive)(m_device, m_poly[polynum].get_type(), vertnum,
-														m_poly[polynum].get_count());
+			if (PRIMFLAG_GET_SCREENTEX(flags))
+				result = (*d3dintf->device.shader_draw_primitive)(m_device, m_poly[polynum].get_type(), vertnum, m_poly[polynum].get_count());
+			else
+				result = (*d3dintf->device.draw_primitive)(m_device, m_poly[polynum].get_type(), vertnum, m_poly[polynum].get_count());
 			if (result != D3D_OK) osd_printf_verbose("Direct3D: Error %08X during device draw_primitive call\n", (int)result);
 		}
 
