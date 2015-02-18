@@ -20,6 +20,7 @@
 #include "d3dintf.h"
 #include "winmain.h"
 #include "strconv.h"
+#include "d3dcomm.h"
 
 
 //============================================================
@@ -476,17 +477,25 @@ static HRESULT device_set_texture(device *dev, DWORD stage, texture *tex)
 }
 
 
-static HRESULT device_shader_set_texture(device *dev, DWORD stage, texture *tex, UINT w, UINT h, UINT o)
+static void device_shader_set_texture(device *dev, texture_info *tex)
 {
-	IDirect3DTexture9 *texture = (IDirect3DTexture9 *)tex;
-	if (g_effect != NULL)
+	if (tex != NULL && g_effect != NULL)
 	{
-		g_effect->SetTexture("Diffuse", texture);
-		g_effect->SetInt("GameWidth", w);
-		g_effect->SetInt("GameHeight", h);
-		g_effect->SetInt("GameOrientation", o);
+		UINT32 flags = tex->get_flags();
+		
+		if (PRIMFLAG_GET_SCREENTEX(flags))
+		{
+			vec2f& dims = tex->get_rawdims();
+			vec2f delta = tex->get_uvstop() - tex->get_uvstart();
+			float w = dims.c.x * delta.c.x;
+			float h = dims.c.y * delta.c.y;
+			int o = PRIMFLAG_GET_TEXORIENT(flags);
+			g_effect->SetTexture("Diffuse", (IDirect3DTexture9 *)tex->get_finaltex());
+			g_effect->SetInt("GameWidth", w);
+			g_effect->SetInt("GameHeight", h);
+			g_effect->SetInt("GameOrientation", o);
+		}
 	}
-	return device_set_texture(dev, stage, tex);
 }
 
 

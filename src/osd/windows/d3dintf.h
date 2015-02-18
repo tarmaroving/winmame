@@ -43,6 +43,7 @@ struct base;
 struct device;
 struct surface;
 struct texture;
+struct texture_info;
 struct vertex_buffer;
 class effect;
 typedef D3DXVECTOR4 vector;
@@ -157,7 +158,7 @@ struct device_interface
 	HRESULT (*set_render_target)(device *dev, DWORD index, surface *surf);
 	HRESULT (*set_stream_source)(device *dev, UINT number, vertex_buffer *vbuf, UINT stride);
 	HRESULT (*set_texture)(device *dev, DWORD stage, texture *tex);
-	HRESULT (*shader_set_texture)(device *dev, DWORD stage, texture *tex, UINT w, UINT h, UINT o);
+	void    (*shader_set_texture)(device *dev, texture_info *tex);
 	HRESULT (*set_texture_stage_state)(device *dev, DWORD stage, D3DTEXTURESTAGESTATETYPE state, DWORD value);
 	HRESULT (*set_vertex_format)(device *dev, D3DFORMAT format);
 	HRESULT (*stretch_rect)(device *dev, surface *source, const RECT *srcrect, surface *dest, const RECT *dstrect, D3DTEXTUREFILTERTYPE filter);

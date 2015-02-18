@@ -341,22 +341,10 @@ void renderer::set_texture(texture_info *texture, UINT32 flags)
 	{
 		m_last_texture = texture;
 		m_last_texture_flags = (texture == NULL ? 0 : texture->get_flags());
-		if (PRIMFLAG_GET_SCREENTEX(flags))
-		{
-			vec2f& dims = texture->get_rawdims();
-			vec2f delta = texture->get_uvstop() - texture->get_uvstart();
-			float w = dims.c.x * delta.c.x;
-			float h = dims.c.y * delta.c.y;
-			int o = PRIMFLAG_GET_TEXORIENT(flags);
-			HRESULT result = (*d3dintf->device.shader_set_texture)(m_device, 0, texture->get_finaltex(), w, h, o);
-			if (result != D3D_OK) osd_printf_verbose("Direct3D: Error %08X during device set_texture call\n", (int)result);
-		}
-		else
-		{
-			HRESULT result = (*d3dintf->device.set_texture)(m_device, 0, (texture == NULL) ? get_default_texture()->get_finaltex() : texture->get_finaltex());
-			if (result != D3D_OK) osd_printf_verbose("Direct3D: Error %08X during device set_texture call\n", (int)result);
-		}
+		HRESULT result = (*d3dintf->device.set_texture)(m_device, 0, (texture == NULL) ? get_default_texture()->get_finaltex() : texture->get_finaltex());
+		if (result != D3D_OK) osd_printf_verbose("Direct3D: Error %08X during device set_texture call\n", (int)result);
 		m_shaders->set_texture(texture);
+		(*d3dintf->device.shader_set_texture)(m_device, texture);
 	}
 }
 
