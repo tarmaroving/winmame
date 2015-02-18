@@ -134,7 +134,7 @@ public:
 	void                    process_primitives();
 	void                    primitive_flush_pending();
 
-	void                    set_texture(texture_info *texture, UINT32 flags);
+	void                    set_texture(texture_info *texture);
 	void                    set_filter(int filter);
 	void                    set_wrap(D3DTEXTUREADDRESS wrap);
 	void                    set_modmode(DWORD modmode);

@@ -335,7 +335,7 @@ static int drawd3d_window_draw(win_window_info *window, HDC dc, int update)
 
 namespace d3d
 {
-void renderer::set_texture(texture_info *texture, UINT32 flags)
+void renderer::set_texture(texture_info *texture)
 {
 	if (texture != m_last_texture)
 	{
@@ -1876,7 +1876,7 @@ void renderer::primitive_flush_pending()
 		int newfilter;
 
 		// set the texture if different
-		set_texture(texture, flags);
+		set_texture(texture);
 
 		// set filtering if different
 		if (texture != NULL)
